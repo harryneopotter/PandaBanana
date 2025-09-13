@@ -133,7 +133,7 @@ const MemeSmithEditor: React.FC<MemeSmithEditorProps> = ({ image, onSave }) => {
       {/* Text Inputs */}
       <div className="w-full space-y-2">
         <input type="text" value={topText} onChange={e => setTopText(e.target.value)} placeholder="Top Text" className="w-full p-3 bg-[var(--color-bg-tertiary)] border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-secondary)]" />
-        <input type="text" value={bottomText} onChange={e => setBottomText(e.target.value)} placeholder="Bottom Text" className="w-full p-3 bg-[var(--color-bg-tertiary)] border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-secondary)]" />
+        <input type="text" value={bottomText} onChange={(e) => setBottomText(e.target.value)} placeholder="Bottom Text" className="w-full p-3 bg-[var(--color-bg-tertiary)] border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-secondary)]" />
       </div>
 
        {/* Caption Suggestions */}
