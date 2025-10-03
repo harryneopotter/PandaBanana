@@ -28,3 +28,10 @@ export enum CloneCastPose {
 }
 
 export type ThemeName = 'qPanda' | 'mint' | 'crimson';
+
+export interface OriginalImage {
+  dataUrl: string;
+  base64: string;
+  mimeType: string;
+  file?: File;
+}

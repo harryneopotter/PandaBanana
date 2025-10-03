@@ -3,14 +3,7 @@ import React, { useState, useCallback } from 'react';
 import { generateSinglePose } from '../services/geminiService';
 import { DownloadIcon, WalkingIcon, LeaningIcon, PortraitIcon } from './Icons';
 import LoadingShimmer from './LoadingShimmer';
-import { CloneCastPose } from '../types';
-
-interface OriginalImage {
-  file: File;
-  dataUrl: string;
-  base64: string;
-  mimeType: string;
-}
+import { CloneCastPose, OriginalImage } from '../types';
 
 interface CloneCastEditorProps {
   image: OriginalImage;

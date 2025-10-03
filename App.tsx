@@ -1,6 +1,6 @@
 
-import React, { useState, useCallback, useEffect } from 'react';
-import { Scene, Screen, EditorMode, ThemeName } from './types';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { Scene, Screen, EditorMode, ThemeName, OriginalImage } from './types';
 import { SCENE_OPTIONS } from './constants';
 import { fileToBase64, editImageWithScene } from './services/geminiService';
 import ImageUploader from './components/ImageUploader';
@@ -15,14 +15,20 @@ import { MagicIcon, MemeIcon, QRIcon, ResetIcon, CloneCastIcon } from './compone
 import { THEMES } from './themes';
 import DreamCanvas from './components/DreamCanvas';
 
-interface OriginalImage {
-  file: File;
-  dataUrl: string;
-  base64: string;
-  mimeType: string;
+const isScreenValue = (value: unknown): value is Screen =>
+  Object.values(Screen).includes(value as Screen);
+
+const isEditorModeValue = (value: unknown): value is EditorMode =>
+  Object.values(EditorMode).includes(value as EditorMode);
+
+interface PersistedSessionState {
+  originalImage: Pick<OriginalImage, 'dataUrl' | 'base64' | 'mimeType'> | null;
+  editorMode: EditorMode;
+  screen: Screen;
 }
 
 const App: React.FC = () => {
+  const SESSION_STORAGE_KEY = 'qPandaStudioCurrentSession';
   const [originalImage, setOriginalImage] = useState<OriginalImage | null>(null);
   const [selectedScene, setSelectedScene] = useState<Scene | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -35,6 +41,81 @@ const App: React.FC = () => {
   // State for SceneShift editor history
   const [sceneShiftHistory, setSceneShiftHistory] = useState<string[]>([]);
   const [sceneShiftHistoryIndex, setSceneShiftHistoryIndex] = useState<number>(-1);
+  const hasHydratedSession = useRef(false);
+
+  const restoreSessionFromStorage = useCallback(() => {
+    try {
+      const stored = localStorage.getItem(SESSION_STORAGE_KEY);
+      if (!stored) {
+        return;
+      }
+
+      const parsed = JSON.parse(stored) as PersistedSessionState;
+      if (parsed?.originalImage && typeof parsed.originalImage.dataUrl === 'string' && typeof parsed.originalImage.base64 === 'string' && typeof parsed.originalImage.mimeType === 'string') {
+        setOriginalImage({
+          dataUrl: parsed.originalImage.dataUrl,
+          base64: parsed.originalImage.base64,
+          mimeType: parsed.originalImage.mimeType,
+        });
+      }
+
+      if (parsed?.screen && isScreenValue(parsed.screen)) {
+        setScreen(parsed.screen);
+      }
+
+      if (parsed?.editorMode && isEditorModeValue(parsed.editorMode)) {
+        setEditorMode(parsed.editorMode);
+      }
+    } catch (e) {
+      console.error('Failed to restore session state from localStorage', e);
+      localStorage.removeItem(SESSION_STORAGE_KEY);
+    } finally {
+      hasHydratedSession.current = true;
+    }
+  }, [SESSION_STORAGE_KEY]);
+
+  const handleScreenChange = useCallback((nextScreen: Screen) => {
+    setScreen(nextScreen);
+    if (nextScreen !== Screen.Home) {
+      setEditorMode(EditorMode.None);
+    }
+  }, []);
+
+  const enterEditorMode = useCallback((mode: EditorMode) => {
+    setScreen(Screen.Home);
+    setEditorMode(mode);
+  }, []);
+
+  useEffect(() => {
+    restoreSessionFromStorage();
+  }, [restoreSessionFromStorage]);
+
+  useEffect(() => {
+    if (!hasHydratedSession.current) {
+      return;
+    }
+
+    try {
+      if (!originalImage) {
+        localStorage.removeItem(SESSION_STORAGE_KEY);
+        return;
+      }
+
+      const sessionToPersist: PersistedSessionState = {
+        originalImage: {
+          dataUrl: originalImage.dataUrl,
+          base64: originalImage.base64,
+          mimeType: originalImage.mimeType,
+        },
+        editorMode,
+        screen,
+      };
+
+      localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(sessionToPersist));
+    } catch (e) {
+      console.error('Failed to persist session state', e);
+    }
+  }, [originalImage, editorMode, screen, SESSION_STORAGE_KEY]);
 
   useEffect(() => {
     try {
@@ -51,12 +132,12 @@ const App: React.FC = () => {
     const activeTheme = THEMES[theme];
     const root = document.documentElement;
     if (activeTheme) {
-        Object.entries(activeTheme.colors).forEach(([key, value]) => {
-            root.style.setProperty(key, value);
-        });
-        Object.entries(activeTheme.backgroundStyles).forEach(([key, value]) => {
-            root.style.setProperty(key, value);
-        });
+    Object.entries(activeTheme.colors).forEach(([key, value]) => {
+      root.style.setProperty(key, value as string);
+    });
+    Object.entries(activeTheme.backgroundStyles).forEach(([key, value]) => {
+      root.style.setProperty(key, value as string);
+    });
     }
     try {
         localStorage.setItem('qPandaStudioTheme', theme);
@@ -161,16 +242,25 @@ const App: React.FC = () => {
     setEditorMode(EditorMode.None);
     setSceneShiftHistory([]);
     setSceneShiftHistoryIndex(-1);
+    setScreen(Screen.Home);
   };
 
   const handleBack = () => {
     if (editorMode !== EditorMode.None) {
       setEditorMode(EditorMode.None);
-      setSelectedScene(null);
-      setSceneShiftHistory([]);
-      setSceneShiftHistoryIndex(-1);
-    } else if (originalImage) {
-      handleReset();
+      return;
+    }
+
+    if (screen !== Screen.Home) {
+      setScreen(Screen.Home);
+      return;
+    }
+
+    if (originalImage) {
+      const confirmReset = window.confirm('Going back will remove your current upload and any unsaved edits. Do you want to continue?');
+      if (confirmReset) {
+        handleReset();
+      }
     }
   };
   
@@ -235,15 +325,15 @@ const App: React.FC = () => {
             <img src={originalImage.dataUrl} alt="Your upload" className="max-w-full w-auto h-auto max-h-[40vh] rounded-2xl shadow-lg mb-6"/>
             <h2 className="text-xl font-semibold mb-4 text-[var(--color-text-secondary)]">Choose your magic</h2>
             <div className="flex flex-wrap justify-center gap-4">
-              <button onClick={() => setEditorMode(EditorMode.SceneShift)} className="flex items-center space-x-2 px-6 py-3 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-primary-text)] rounded-full font-bold transition-all transform hover:scale-105">
+              <button onClick={() => enterEditorMode(EditorMode.SceneShift)} className="flex items-center space-x-2 px-6 py-3 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-primary-text)] rounded-full font-bold transition-all transform hover:scale-105">
                 <MagicIcon className="w-6 h-6"/>
                 <span>SceneShift</span>
               </button>
-              <button onClick={() => setEditorMode(EditorMode.MemeSmith)} className="flex items-center space-x-2 px-6 py-3 bg-[var(--color-secondary)] hover:bg-[var(--color-secondary-hover)] text-[var(--color-secondary-text)] rounded-full font-bold transition-all transform hover:scale-105">
+              <button onClick={() => enterEditorMode(EditorMode.MemeSmith)} className="flex items-center space-x-2 px-6 py-3 bg-[var(--color-secondary)] hover:bg-[var(--color-secondary-hover)] text-[var(--color-secondary-text)] rounded-full font-bold transition-all transform hover:scale-105">
                 <MemeIcon className="w-6 h-6"/>
                 <span>MemeSmith</span>
               </button>
-              <button onClick={() => setEditorMode(EditorMode.CloneCast)} className="flex items-center space-x-2 px-6 py-3 bg-[var(--color-tertiary)] hover:bg-[var(--color-tertiary-hover)] text-[var(--color-tertiary-text)] rounded-full font-bold transition-all transform hover:scale-105">
+              <button onClick={() => enterEditorMode(EditorMode.CloneCast)} className="flex items-center space-x-2 px-6 py-3 bg-[var(--color-tertiary)] hover:bg-[var(--color-tertiary-hover)] text-[var(--color-tertiary-text)] rounded-full font-bold transition-all transform hover:scale-105">
                 <CloneCastIcon className="w-6 h-6"/>
                 <span>CloneCast</span>
               </button>
@@ -285,10 +375,10 @@ const App: React.FC = () => {
     return null;
   };
 
-  const showHeaderBack = screen === Screen.Home && originalImage !== null;
+  const showHeaderBack = editorMode !== EditorMode.None || screen !== Screen.Home || originalImage !== null;
 
   return (
-    <div className="w-full min-h-screen bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] font-sans flex items-center justify-center p-0 sm:p-4 bg-gradient-to-br from-[var(--color-gradient-from)] via-[var(--color-gradient-via)] to-[var(--color-gradient-to)] relative overflow-hidden">
+  <div className="w-full min-h-screen bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] font-sans flex p-0 sm:p-4 bg-gradient-to-br from-[var(--color-gradient-from)] via-[var(--color-gradient-via)] to-[var(--color-gradient-to)] relative overflow-hidden">
         
       {/* Background Decorations */}
       <div className="absolute -top-1/4 -left-1/4 w-96 h-96 bg-[var(--color-blob-2)] rounded-full filter blur-3xl opacity-40 animate-blob"></div>
@@ -304,17 +394,17 @@ const App: React.FC = () => {
 
       {/* The Phone Mockup */}
       <div 
-        className="w-full h-full sm:max-w-[400px] sm:h-[90vh] sm:max-h-[850px] sm:rounded-[40px] sm:shadow-2xl sm:border-[10px] sm:border-[var(--color-bg-tertiary)] overflow-hidden relative flex flex-col"
+        className="w-full flex flex-col h-full sm:max-w-[400px] sm:h-[90vh] sm:max-h-[850px] sm:rounded-[40px] sm:shadow-2xl sm:border-[10px] sm:border-[var(--color-bg-tertiary)] overflow-hidden relative"
         style={{
             backgroundColor: 'var(--color-bg-primary)',
             backgroundImage: 'var(--bg-primary-image)',
         }}
       >
-        <Header onBack={showHeaderBack ? handleBack : undefined} />
-        <main className="flex-grow flex flex-col items-center overflow-y-auto">
+  <Header onBack={showHeaderBack ? handleBack : undefined} />
+        <main className="flex-1 flex flex-col items-center overflow-y-auto">
           <div
             key={screen}
-            className="w-full max-w-md mx-auto p-4 flex-grow flex flex-col justify-center animate-screen-fade-in"
+            className="w-full max-w-md mx-auto p-4 flex-1 flex flex-col justify-center animate-screen-fade-in"
           >
             {screen === Screen.Home && renderHome()}
             {screen === Screen.Dream && <DreamCanvas onSave={handleSaveImage} />}
@@ -328,7 +418,7 @@ const App: React.FC = () => {
             )}
           </div>
         </main>
-        <BottomNav activeScreen={screen} setScreen={setScreen} />
+        <BottomNav activeScreen={screen} setScreen={handleScreenChange} />
       </div>
     </div>
   );
