@@ -23,7 +23,7 @@ export const fileToBase64 = (file: File): Promise<{imageData: string; mimeType: 
   });
 };
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+const ai = process.env.API_KEY ? new GoogleGenAI({ apiKey: process.env.API_KEY as string }) : null;
 
 const handleGeminiError = (error: unknown, context: string): Error => {
     console.error(`Error during ${context}:`, error);
@@ -38,6 +38,9 @@ export const editImageWithScene = async (
   mimeType: string,
   prompt: string
 ): Promise<string> => {
+  if (!ai) {
+    throw new Error("API Key is not configured");
+  }
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash-image-preview',
@@ -81,6 +84,9 @@ export const generateMemeCaptions = async (
   base64ImageData: string,
   mimeType: string,
 ): Promise<{isMemeTemplate: boolean; memeName: string | null; captions: string[]}> => {
+  if (!ai) {
+    throw new Error("API Key is not configured");
+  }
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
