@@ -2,13 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { generateMemeCaptions } from '../services/geminiService';
 import { DownloadIcon } from './Icons';
-
-interface OriginalImage {
-  file: File;
-  dataUrl: string;
-  base64: string;
-  mimeType: string;
-}
+import { OriginalImage } from '../types';
 
 interface MemeSmithEditorProps {
   image: OriginalImage;
