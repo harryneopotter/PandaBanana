@@ -378,7 +378,7 @@ const App: React.FC = () => {
   const showHeaderBack = editorMode !== EditorMode.None || screen !== Screen.Home || originalImage !== null;
 
   return (
-  <div className="w-full min-h-screen bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] font-sans flex p-0 sm:p-4 bg-gradient-to-br from-[var(--color-gradient-from)] via-[var(--color-gradient-via)] to-[var(--color-gradient-to)] relative overflow-hidden">
+  <div className="w-full h-full bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] font-sans flex p-0 sm:p-4 bg-gradient-to-br from-[var(--color-gradient-from)] via-[var(--color-gradient-via)] to-[var(--color-gradient-to)] relative overflow-hidden">
         
       {/* Background Decorations */}
       <div className="absolute -top-1/4 -left-1/4 w-96 h-96 bg-[var(--color-blob-2)] rounded-full filter blur-3xl opacity-40 animate-blob"></div>
@@ -394,17 +394,17 @@ const App: React.FC = () => {
 
       {/* The Phone Mockup */}
       <div 
-        className="w-full flex flex-col h-full sm:max-w-[400px] sm:h-[90vh] sm:max-h-[850px] sm:rounded-[40px] sm:shadow-2xl sm:border-[10px] sm:border-[var(--color-bg-tertiary)] overflow-hidden relative"
+        className="w-full h-full flex flex-col sm:max-w-[400px] sm:h-[90vh] sm:max-h-[850px] sm:rounded-[40px] sm:shadow-2xl sm:border-[10px] sm:border-[var(--color-bg-tertiary)] overflow-hidden relative"
         style={{
             backgroundColor: 'var(--color-bg-primary)',
             backgroundImage: 'var(--bg-primary-image)',
         }}
       >
-  <Header onBack={showHeaderBack ? handleBack : undefined} />
-        <main className="flex-1 flex flex-col items-center overflow-y-auto">
+        <Header onBack={showHeaderBack ? handleBack : undefined} />
+        <main className="flex-1 flex flex-col items-center overflow-y-auto min-h-0">
           <div
             key={screen}
-            className="w-full max-w-md mx-auto p-4 flex-1 flex flex-col justify-center animate-screen-fade-in"
+            className="w-full max-w-md mx-auto p-4 flex-1 flex flex-col animate-screen-fade-in"
           >
             {screen === Screen.Home && renderHome()}
             {screen === Screen.Dream && <DreamCanvas onSave={handleSaveImage} />}
