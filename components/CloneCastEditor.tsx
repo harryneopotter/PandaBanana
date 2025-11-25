@@ -16,6 +16,15 @@ const POSE_OPTIONS = [
   { value: CloneCastPose.Portrait, label: 'Portrait', icon: PortraitIcon, description: "Waist-up, focused shot" },
 ];
 
+const PROMPT_SUGGESTIONS = [
+  "modeling a leather jacket on a rainy Tokyo street, Vogue lighting",
+  "wearing elegant formal attire in a luxury hotel lobby, soft cinematic lighting",
+  "dressed in streetwear on a graffiti-covered urban rooftop at sunset",
+  "in athletic wear at a modern gym with dramatic side lighting",
+  "wearing a cozy sweater in a café with warm golden hour light through windows",
+  "in business casual attire in a sleek modern office with floor-to-ceiling windows",
+];
+
 const CloneCastEditor: React.FC<CloneCastEditorProps> = ({ image, onSave }) => {
   const [prompt, setPrompt] = useState('');
   const [selectedPoses, setSelectedPoses] = useState<Set<CloneCastPose>>(
@@ -128,12 +137,30 @@ const CloneCastEditor: React.FC<CloneCastEditorProps> = ({ image, onSave }) => {
         <textarea
           value={prompt}
           onChange={e => setPrompt(e.target.value)}
-          placeholder="e.g., modeling a leather jacket on a rainy Tokyo street, Vogue lighting"
+          placeholder="Describe the scene, outfit, and lighting..."
           className="w-full p-3 bg-[var(--color-bg-tertiary)] border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-tertiary)] h-24 resize-none"
           disabled={isGenerating}
         />
-        <button 
-          onClick={handleGenerate} 
+
+        {/* Prompt Suggestions */}
+        <div className="w-full">
+          <h3 className="text-xs font-semibold text-[var(--color-text-secondary)] mb-2">💡 Try these prompts:</h3>
+          <div className="flex flex-wrap gap-2">
+            {PROMPT_SUGGESTIONS.map((suggestion, i) => (
+              <button
+                key={i}
+                onClick={() => setPrompt(suggestion)}
+                disabled={isGenerating}
+                className="text-xs px-3 py-1.5 bg-[var(--color-bg-tertiary)] hover:bg-[var(--color-tertiary)]/20 border border-[var(--color-border)] hover:border-[var(--color-tertiary)] rounded-full transition-all disabled:opacity-50 text-left"
+              >
+                "{suggestion.length > 50 ? suggestion.substring(0, 50) + '...' : suggestion}"
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <button
+          onClick={handleGenerate}
           disabled={!prompt.trim() || selectedPoses.size === 0 || isGenerating}
           className="w-full px-6 py-3 bg-[var(--color-tertiary)] hover:bg-[var(--color-tertiary-hover)] text-[var(--color-tertiary-text)] rounded-full font-bold transition-colors disabled:opacity-50 disabled:bg-[var(--color-border)] disabled:cursor-not-allowed"
         >
