@@ -1,9 +1,11 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { generateGifFrame } from '../services/geminiService';
 import { DownloadIcon, TrashIcon } from './Icons';
 import LoadingShimmer from './LoadingShimmer';
 import { OriginalImage } from '../types';
+// @ts-ignore - gif.js types may not be perfect
+import GIF from 'gif.js';
 
 interface GifCreatorEditorProps {
   image: OriginalImage;
@@ -47,7 +49,11 @@ const GifCreatorEditor: React.FC<GifCreatorEditorProps> = ({ image, onSave }) =>
   const [gifUrl, setGifUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [currentFrameIndex, setCurrentFrameIndex] = useState(0);
+  const [frameDelay, setFrameDelay] = useState(500); // milliseconds between frames
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [previewFrameIndex, setPreviewFrameIndex] = useState(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const animationRef = useRef<number | null>(null);
 
   const handleGenerateFrames = async () => {
     const prompts = selectedPreset
@@ -96,12 +102,6 @@ const GifCreatorEditor: React.FC<GifCreatorEditorProps> = ({ image, onSave }) =>
     setError(null);
 
     try {
-      const canvas = canvasRef.current;
-      if (!canvas) throw new Error('Canvas not available');
-
-      const ctx = canvas.getContext('2d');
-      if (!ctx) throw new Error('Cannot get canvas context');
-
       // Load all frames as images
       const imageElements = await Promise.all(
         frames.map(frame => {
@@ -115,32 +115,51 @@ const GifCreatorEditor: React.FC<GifCreatorEditorProps> = ({ image, onSave }) =>
         })
       );
 
-      // Set canvas dimensions based on first image
-      canvas.width = imageElements[0].width;
-      canvas.height = imageElements[0].height;
+      // Get dimensions from first image
+      const width = imageElements[0].width;
+      const height = imageElements[0].height;
 
-      // Create a simple animated sequence by encoding as WebP
-      // For a true GIF, we'd need a GIF encoding library
-      // For now, we'll create a downloadable ZIP or use the first frame as preview
-      const link = document.createElement('a');
-      
-      // Download frames as individual images
-      frames.forEach((frame, index) => {
-        const a = document.createElement('a');
-        a.href = frame.url;
-        a.download = `frame_${index + 1}.png`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+      // Create GIF encoder
+      const gif = new GIF({
+        workers: 2,
+        quality: 10,
+        width,
+        height,
+        workerScript: '/gif.worker.js', // We'll need to copy this to public
       });
 
-      setError('Frames downloaded! Use a GIF creator tool to combine them, or we\'ll add animation preview soon.');
-      
+      // Add each frame to the GIF
+      imageElements.forEach((img) => {
+        gif.addFrame(img, { delay: frameDelay });
+      });
+
+      // Handle GIF rendering completion
+      gif.on('finished', (blob: Blob) => {
+        const url = URL.createObjectURL(blob);
+        setGifUrl(url);
+
+        // Automatically download the GIF
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'animation.gif';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        setIsCreatingGif(false);
+      });
+
+      gif.on('progress', (progress: number) => {
+        console.log('GIF encoding progress:', Math.round(progress * 100) + '%');
+      });
+
+      // Start rendering
+      gif.render();
+
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Could not create GIF.';
       setError(message);
       console.error(err);
-    } finally {
       setIsCreatingGif(false);
     }
   };
@@ -148,6 +167,42 @@ const GifCreatorEditor: React.FC<GifCreatorEditorProps> = ({ image, onSave }) =>
   const handleDeleteFrame = (index: number) => {
     setFrames(frames.filter((_, i) => i !== index));
   };
+
+  // Animation preview effect
+  useEffect(() => {
+    if (isPlaying && frames.length > 0) {
+      animationRef.current = window.setInterval(() => {
+        setPreviewFrameIndex((prev) => (prev + 1) % frames.length);
+      }, frameDelay);
+    } else {
+      if (animationRef.current) {
+        clearInterval(animationRef.current);
+        animationRef.current = null;
+      }
+    }
+
+    return () => {
+      if (animationRef.current) {
+        clearInterval(animationRef.current);
+      }
+    };
+  }, [isPlaying, frames.length, frameDelay]);
+
+  const togglePreview = () => {
+    setIsPlaying(!isPlaying);
+    if (!isPlaying) {
+      setPreviewFrameIndex(0);
+    }
+  };
+
+  // Cleanup blob URL on unmount or when creating new GIF
+  useEffect(() => {
+    return () => {
+      if (gifUrl) {
+        URL.revokeObjectURL(gifUrl);
+      }
+    };
+  }, [gifUrl]);
 
   return (
     <div className="w-full flex flex-col items-center space-y-4">
@@ -208,6 +263,25 @@ const GifCreatorEditor: React.FC<GifCreatorEditorProps> = ({ image, onSave }) =>
         />
       </div>
 
+      {/* Frame Duration Control */}
+      <div className="w-full space-y-2">
+        <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">Frame Duration</h3>
+        <div className="flex items-center space-x-3">
+          <input
+            type="range"
+            min="100"
+            max="2000"
+            step="100"
+            value={frameDelay}
+            onChange={(e) => setFrameDelay(Number(e.target.value))}
+            className="flex-1"
+          />
+          <span className="text-sm text-[var(--color-text-secondary)] min-w-[80px]">
+            {frameDelay}ms ({(1000 / frameDelay).toFixed(1)} fps)
+          </span>
+        </div>
+      </div>
+
       {/* Generate Frames Button */}
       <button
         onClick={handleGenerateFrames}
@@ -217,20 +291,47 @@ const GifCreatorEditor: React.FC<GifCreatorEditorProps> = ({ image, onSave }) =>
         {isGenerating ? `Generating Frame ${currentFrameIndex}...` : '🎬 Generate Frames'}
       </button>
 
-      {/* Frames Preview */}
+      {/* Animation Preview */}
       {frames.length > 0 && (
         <div className="w-full space-y-2">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
-              Generated Frames ({frames.length})
+              Animation Preview
+            </h3>
+            <button
+              onClick={togglePreview}
+              className="px-3 py-1 bg-[var(--color-primary)] text-[var(--color-primary-text)] rounded-full text-xs font-bold hover:bg-[var(--color-primary-hover)] transition-all"
+            >
+              {isPlaying ? '⏸ Pause' : '▶ Play'}
+            </button>
+          </div>
+          <div className="w-full rounded-xl shadow-lg overflow-hidden bg-[var(--color-bg-tertiary)]">
+            <img
+              src={frames[previewFrameIndex].url}
+              alt={`Preview Frame ${previewFrameIndex + 1}`}
+              className="w-full"
+            />
+            <div className="p-2 text-center text-xs text-[var(--color-text-secondary)]">
+              Frame {previewFrameIndex + 1} of {frames.length}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Frames Grid */}
+      {frames.length > 0 && (
+        <div className="w-full space-y-2">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
+              All Frames ({frames.length})
             </h3>
           </div>
           <div className="grid grid-cols-2 gap-2">
             {frames.map((frame, index) => (
               <div key={index} className="relative group">
-                <img 
-                  src={frame.url} 
-                  alt={`Frame ${index + 1}`} 
+                <img
+                  src={frame.url}
+                  alt={`Frame ${index + 1}`}
                   className="w-full rounded-lg shadow-md"
                 />
                 <button
@@ -256,8 +357,19 @@ const GifCreatorEditor: React.FC<GifCreatorEditorProps> = ({ image, onSave }) =>
           className="w-full flex items-center justify-center space-x-2 py-3 bg-[var(--color-secondary)] hover:bg-[var(--color-secondary-hover)] text-[var(--color-secondary-text)] font-bold rounded-full transition-all disabled:opacity-50 transform hover:scale-105"
         >
           <DownloadIcon className="w-5 h-5" />
-          <span>{isCreatingGif ? 'Creating...' : 'Download Frames'}</span>
+          <span>{isCreatingGif ? 'Creating GIF...' : '🎞️ Create & Download GIF'}</span>
         </button>
+      )}
+
+      {/* Created GIF Preview */}
+      {gifUrl && (
+        <div className="w-full space-y-2">
+          <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">Created GIF</h3>
+          <img src={gifUrl} alt="Created GIF" className="w-full rounded-xl shadow-lg" />
+          <p className="text-sm text-center text-[var(--color-text-secondary)]">
+            ✅ GIF created and downloaded successfully!
+          </p>
+        </div>
       )}
 
       {/* Hidden canvas for GIF creation */}

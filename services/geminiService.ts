@@ -342,8 +342,9 @@ export const smartCropImage = async (
   targetAspectRatio: string
 ): Promise<string> => {
   try {
+    // First, get crop suggestion from Gemini
     const requestBody = {
-      model: 'gemini-2.5-flash-image-preview',
+      model: 'gemini-2.5-flash',
       contents: {
         parts: [
           {
@@ -353,16 +354,24 @@ export const smartCropImage = async (
             },
           },
           {
-            text: `Create a smart crop of this image for ${targetAspectRatio} aspect ratio. Focus on the most interesting subject or composition. Maintain high quality and ensure the main subject is well-framed. Return a cropped version that works perfectly for this aspect ratio.`,
+            text: `Analyze this image and suggest the best crop coordinates for a ${targetAspectRatio} aspect ratio. Focus on the most interesting subject or composition. Return ONLY a JSON object with this exact format:
+{
+  "x": <left coordinate as percentage 0-100>,
+  "y": <top coordinate as percentage 0-100>,
+  "width": <width as percentage 0-100>,
+  "height": <height as percentage 0-100>
+}
+
+Important: The crop region must maintain ${targetAspectRatio} aspect ratio. x and y are the top-left corner position. Ensure the main subject is well-framed.`,
           },
         ],
       },
       config: {
-        responseModalities: [Modality.IMAGE, Modality.TEXT],
+        responseModalities: [Modality.TEXT],
       },
     };
 
-    const response = USE_PROXY 
+    const response = USE_PROXY
       ? await callProxyAPI('/api/generate-content', requestBody)
       : await ai!.models.generateContent(requestBody);
 
@@ -371,13 +380,62 @@ export const smartCropImage = async (
         throw new Error('No valid candidates returned from the API.');
     }
 
+    // Extract JSON from response
+    let cropData;
     for (const part of firstCandidate.content.parts) {
-      if (part.inlineData?.data) {
-        return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+      if (part.text) {
+        const jsonMatch = part.text.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          cropData = JSON.parse(jsonMatch[0]);
+          break;
+        }
       }
     }
 
-    throw new Error('No cropped image was generated.');
+    if (!cropData) {
+      throw new Error('Could not parse crop coordinates from AI response.');
+    }
+
+    // Now perform the actual crop client-side using canvas
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Could not get canvas context'));
+          return;
+        }
+
+        // Convert percentages to pixels
+        const sourceX = (cropData.x / 100) * img.width;
+        const sourceY = (cropData.y / 100) * img.height;
+        const sourceWidth = (cropData.width / 100) * img.width;
+        const sourceHeight = (cropData.height / 100) * img.height;
+
+        // Set canvas size to cropped dimensions
+        canvas.width = sourceWidth;
+        canvas.height = sourceHeight;
+
+        // Draw the cropped portion
+        ctx.drawImage(
+          img,
+          sourceX, sourceY, sourceWidth, sourceHeight,
+          0, 0, sourceWidth, sourceHeight
+        );
+
+        // Convert to data URL
+        const croppedDataUrl = canvas.toDataURL(mimeType);
+        resolve(croppedDataUrl);
+      };
+
+      img.onerror = () => {
+        reject(new Error('Failed to load image for cropping'));
+      };
+
+      img.src = `data:${mimeType};base64,${base64ImageData}`;
+    });
 
   } catch (error) {
     throw handleGeminiError(error, 'smart crop');
