@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Scene, Screen, EditorMode, ThemeName, OriginalImage } from './types';
 import { SCENE_OPTIONS } from './constants';
@@ -36,7 +35,6 @@ const App: React.FC = () => {
   const SESSION_STORAGE_KEY = 'qPandaStudioCurrentSession';
   const SPLASH_SHOWN_KEY = 'qPandaStudioSplashShown';
   const [showSplash, setShowSplash] = useState<boolean>(() => {
-    // Show splash only once per session
     const splashShown = sessionStorage.getItem(SPLASH_SHOWN_KEY);
     return !splashShown;
   });
@@ -187,7 +185,6 @@ const App: React.FC = () => {
             }
         } catch (e) {
             console.error("Failed to parse saved images from localStorage", e);
-            // Clear corrupted data
             localStorage.removeItem('qPandaStudioSavedImages');
         }
       }
@@ -240,15 +237,11 @@ const App: React.FC = () => {
     setTheme(newTheme);
   };
 
-
   const handleImageSelect = async (file: File) => {
-    // Check API health before allowing image upload
     if (!isApiHealthy) {
       setError(apiError || 'API is not available. Please check your API key configuration.');
       return;
     }
-    
-    // Validation logic is now in ImageUploader
     try {
         const { imageData, mimeType } = await fileToBase64(file);
         const dataUrl = `data:${mimeType};base64,${imageData}`;
@@ -348,7 +341,7 @@ const App: React.FC = () => {
 
     generateImage();
   }, [originalImage, selectedScene, editorMode]);
-  
+
   const renderHome = () => {
     if (!originalImage) {
       return (
@@ -489,50 +482,52 @@ const App: React.FC = () => {
 
   const showHeaderBack = editorMode !== EditorMode.None || screen !== Screen.Home || originalImage !== null;
 
+  // ---- SPLASHSCREEN HANDLER MOVED HERE ----
+  const handleSplashComplete = useCallback(() => {
+    setShowSplash(false);
+    sessionStorage.setItem(SPLASH_SHOWN_KEY, 'true');
+  }, [SPLASH_SHOWN_KEY]);
+
   return (
-  <>
-  <div className="w-full h-full bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] font-sans flex justify-center items-center p-0 sm:p-4 relative overflow-hidden">
+    <>
+      {/* Splash Screen - Render first for proper layering */}
+      {showSplash && (
+        <SplashScreen
+          onComplete={handleSplashComplete}
+        />
+      )}
 
-      {/* The Phone Mockup */}
-      <div 
-        className="w-full h-[100dvh] flex flex-col sm:max-w-[400px] sm:h-[90vh] sm:max-h-[850px] sm:rounded-[40px] sm:shadow-2xl sm:border-[10px] sm:border-[var(--color-bg-tertiary)] overflow-hidden relative"
-        style={{
-            backgroundColor: 'var(--color-bg-primary)',
-            backgroundImage: 'var(--bg-primary-image)',
-        }}
-      >
-        <Header onBack={showHeaderBack ? handleBack : undefined} />
-        <main className="flex-1 overflow-y-auto min-h-0">
-          <div
-            key={screen}
-            className="w-full max-w-md mx-auto p-4 animate-screen-fade-in"
-          >
-            {screen === Screen.Home && renderHome()}
-            {screen === Screen.Dream && <DreamCanvas onSave={handleSaveImage} />}
-            {screen === Screen.Saved && <SavedImages images={savedImages} onDelete={handleDeleteImage} />}
-            {screen === Screen.Settings && <Settings onClearSavedImages={handleClearSavedImages} activeTheme={theme} onThemeChange={handleThemeChange} />}
+      <div className="w-full h-full bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] font-sans flex justify-center items-center p-0 sm:p-4 relative overflow-hidden">
+        {/* The Phone Mockup */}
+        <div
+          className="w-full h-[100dvh] flex flex-col sm:max-w-[400px] sm:h-[90vh] sm:max-h-[850px] sm:rounded-[40px] sm:shadow-2xl sm:border-[10px] sm:border-[var(--color-bg-tertiary)] overflow-hidden relative"
+          style={{
+              backgroundColor: 'var(--color-bg-primary)',
+              backgroundImage: 'var(--bg-primary-image)',
+          }}
+        >
+          <Header onBack={showHeaderBack ? handleBack : undefined} />
+          <main className="flex-1 overflow-y-auto min-h-0">
+            <div
+              key={screen}
+              className="w-full max-w-md mx-auto p-4 animate-screen-fade-in"
+            >
+              {screen === Screen.Home && renderHome()}
+              {screen === Screen.Dream && <DreamCanvas onSave={handleSaveImage} />}
+              {screen === Screen.Saved && <SavedImages images={savedImages} onDelete={handleDeleteImage} />}
+              {screen === Screen.Settings && <Settings onClearSavedImages={handleClearSavedImages} activeTheme={theme} onThemeChange={handleThemeChange} />}
 
-            {error && (
-              <div className="mt-4 p-3 bg-[var(--color-danger)]/20 text-[var(--color-danger)] border border-[var(--color-danger)]/50 rounded-lg text-center">
-                  {error}
-              </div>
-            )}
-          </div>
-        </main>
-        <BottomNav activeScreen={screen} setScreen={handleScreenChange} />
+              {error && (
+                <div className="mt-4 p-3 bg-[var(--color-danger)]/20 text-[var(--color-danger)] border border-[var(--color-danger)]/50 rounded-lg text-center">
+                    {error}
+                </div>
+              )}
+            </div>
+          </main>
+          <BottomNav activeScreen={screen} setScreen={handleScreenChange} />
+        </div>
       </div>
-    </div>
-
-    {/* Splash Screen */}
-    {showSplash && (
-      <SplashScreen
-        onComplete={() => {
-          setShowSplash(false);
-          sessionStorage.setItem(SPLASH_SHOWN_KEY, 'true');
-        }}
-      />
-    )}
-  </>
+    </>
   );
 };
 
