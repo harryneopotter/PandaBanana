@@ -195,6 +195,15 @@ const GifCreatorEditor: React.FC<GifCreatorEditorProps> = ({ image, onSave }) =>
     }
   };
 
+  // Cleanup blob URL on unmount or when creating new GIF
+  useEffect(() => {
+    return () => {
+      if (gifUrl) {
+        URL.revokeObjectURL(gifUrl);
+      }
+    };
+  }, [gifUrl]);
+
   return (
     <div className="w-full flex flex-col items-center space-y-4">
       <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">GIF Creator</h2>
