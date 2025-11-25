@@ -491,15 +491,21 @@ const App: React.FC = () => {
 
   return (
   <>
-    {/* Splash Screen - Render first for proper layering */}
-    {showSplash && (
-      <SplashScreen
-        onComplete={() => {
-          setShowSplash(false);
-          sessionStorage.setItem(SPLASH_SHOWN_KEY, 'true');
-        }}
-      />
-    )}
+  const handleSplashComplete = useCallback(() => {
+    setShowSplash(false);
+    sessionStorage.setItem(SPLASH_SHOWN_KEY, 'true');
+  }, [SPLASH_SHOWN_KEY]);
+
+  return (
+    <>
+      {/* Splash Screen - Render first for proper layering */}
+      {showSplash && (
+        <SplashScreen
+          onComplete={handleSplashComplete}
+        />
+      )}
+    </>
+  )
 
     <div className="w-full h-full bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] font-sans flex justify-center items-center p-0 sm:p-4 relative overflow-hidden">
 
