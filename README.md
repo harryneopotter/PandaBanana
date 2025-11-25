@@ -5,11 +5,34 @@
   <img width="1200" height="475" alt="Q Panda Studio Banner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
   
   <p>
+    <img alt="GitHub stars" src="https://img.shields.io/github/stars/harryneopotter/PandaBanana?style=social" />
+    <img alt="GitHub forks" src="https://img.shields.io/github/forks/harryneopotter/PandaBanana?style=social" />
+  </p>
+  
+  <p>
     <img alt="React" src="https://img.shields.io/badge/React-19.1.1-61DAFB?style=flat-square&logo=react" />
     <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5.8.2-3178C6?style=flat-square&logo=typescript" />
     <img alt="Vite" src="https://img.shields.io/badge/Vite-6.2.0-646CFF?style=flat-square&logo=vite" />
     <img alt="Gemini AI" src="https://img.shields.io/badge/Powered_by-Gemini_AI-4285F4?style=flat-square&logo=google" />
   </p>
+</div>
+
+---
+
+## 📱 See It In Action
+
+<div align="center">
+  
+  **🎬 Demo Video Coming Soon!**
+  
+  *Record a 30-second demo showing:*
+  - *Upload an image from your phone*
+  - *Try Scene Shift to transform the background*
+  - *Apply Style Transfer (Van Gogh or Anime style)*
+  - *See the AI-powered results*
+  
+  📱 **Pro Tip:** Record on your actual phone to showcase the mobile-first experience!
+  
 </div>
 
 ---
@@ -20,14 +43,25 @@
 
 ### 🎯 Key Features
 
+#### Core Editors
 - **🌟 Scene Shift**: Teleport your images to entirely new environments and settings
 - **😂 Meme Smith**: Generate hilarious memes with AI-powered text and effects  
 - **🎭 Clone Cast**: Create stunning variations and artistic interpretations
 - **🎨 Dream Canvas**: Generate original artwork from your imagination
+
+#### Advanced Tools
+- **✂️ Smart Crop**: AI-powered intelligent cropping for perfect compositions across different aspect ratios
+- **🎨 Style Transfer**: Transform photos into artistic masterpieces (Van Gogh, Picasso, Monet, Anime, and more)
+- **⬆️ Image Upscaler**: Enhance resolution and quality with AI-powered upscaling
+- **🎬 GIF Creator**: Generate animated sequences with AI-driven frame variations
+
+#### Platform Features
 - **📱 Mobile-First Design**: Responsive interface optimized for all devices
 - **🎭 Multiple Themes**: Customizable UI themes for personalized experience
 - **💾 Local Storage**: Save and manage your creations locally
 - **⚡ Real-time Processing**: Fast AI-powered image generation
+- **🔒 Rate Limiting**: Built-in API rate limiting with IP whitelisting support
+- **🛡️ Security**: Server-side API key management for enhanced security
 
 ---
 
@@ -52,20 +86,37 @@
 
 3. **Set up environment variables**
    ```bash
-   # Create .env.local file
-   echo "GEMINI_API_KEY=your_gemini_api_key_here" > .env.local
+   # Copy the example environment file
+   cp .env.example .env.local
+   
+   # Edit .env.local and add your Gemini API key
+   # GEMINI_API_KEY=your_gemini_api_key_here
    ```
    
    > 🔑 Get your API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
 
-4. **Start the development server**
+4. **Start the application**
+   
+   **Option A: Full stack (for local development)**
+   ```bash
+   npm run dev:full
+   ```
+   This starts both the frontend (port 5173) and Express API server (port 3001) with rate limiting.
+   
+   **Option B: Frontend only (direct Gemini API)**
    ```bash
    npm run dev
    ```
+   Set `VITE_USE_API_PROXY=false` to call Gemini API directly from the browser.
 
 5. **Open your browser**
    - Navigate to `http://localhost:5173`
    - Start creating amazing images! 🎨
+
+6. **Configure Rate Limiting (Optional)**
+   - See [RATE_LIMITING.md](./RATE_LIMITING.md) for detailed configuration
+   - Set request limits, time windows, and IP whitelisting
+   - Default: 10 requests per 15 minutes per IP
 
 ---
 
@@ -81,6 +132,10 @@
    - **Meme Smith**: Add text and meme effects
    - **Clone Cast**: Create artistic variations
    - **Dream Canvas**: Generate from scratch
+   - **Smart Crop**: AI-powered cropping for different aspect ratios
+   - **Style Transfer**: Apply artistic styles (Van Gogh, Anime, etc.)
+   - **Upscale**: Enhance image quality and resolution
+   - **GIF Creator**: Generate animated frame sequences
 
 ### 3. **Customize & Create**
    - Select from preset options or enter custom prompts
@@ -115,21 +170,50 @@ Transform your photos into different environments:
 
 ### 😂 Meme Smith
 Create viral-ready memes:
-- AI-generated text suggestions
-- Popular meme formats
+- AI-generated meme text and captions
+- Popular meme formats and templates
 - Custom font and positioning
 
 ### 🎭 Clone Cast
 Artistic image variations:
-- Style transfers (oil painting, watercolor, sketches)
-- Color palette transformations
-- Artistic interpretations
+- Create multiple variations of your image
+- Style transfers and artistic interpretations
+- Explore creative possibilities
 
 ### 🎨 Dream Canvas
 Generate original artwork:
-- Text-to-image generation
-- Creative prompts and styles
-- High-resolution outputs
+- Text-to-image generation from imagination
+- Creative prompts and artistic styles
+- High-resolution AI-generated outputs
+
+### ✂️ Smart Crop
+AI-powered intelligent cropping:
+- Perfect compositions for any aspect ratio
+- 5 preset ratios: Square (1:1), Landscape (16:9), Portrait (9:16), Classic (4:3), Ultrawide (21:9)
+- AI analyzes subject and suggests optimal crop
+- Preserves important elements automatically
+
+### 🎨 Style Transfer
+Transform photos into artistic masterpieces:
+- **10 Artistic Styles**: Van Gogh, Picasso, Monet, Warhol, Hokusai, Anime, Watercolor, Oil Painting, Sketch, Cyberpunk
+- Apply famous painting styles to your photos
+- Real-time style preview
+- High-quality artistic transformations
+
+### ⬆️ Image Upscaler
+Enhance image quality and resolution:
+- AI-powered upscaling for sharper details
+- Quality enhancement and noise reduction
+- Before/after comparison view
+- Perfect for improving low-resolution images
+
+### 🎬 GIF Creator
+Generate animated sequences:
+- **5 Animation Presets**: Color Shift, Weather Changes, Time of Day, Artistic Styles, Zoom Effects
+- Custom animation prompts supported
+- Multi-frame generation (up to 10 frames)
+- Individual frame editing and management
+- Export-ready frame sequences
 
 ---
 
@@ -168,13 +252,73 @@ q-panda-studio/
 
 ---
 
+## 🔒 Rate Limiting & Security
+
+Q Panda Studio includes built-in rate limiting and IP whitelisting to protect your API usage:
+
+### Features
+- **Per-IP Rate Limiting**: Prevents abuse by limiting requests per IP address
+- **IP Whitelisting**: Bypass rate limits for trusted IPs
+- **Configurable Limits**: Customize time windows and request counts
+- **Secure API Keys**: Server-side API key management
+
+### Quick Configuration
+
+Edit `.env.local`:
+```env
+# Rate limiting (10 requests per 15 minutes by default)
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX_REQUESTS=10
+
+# Whitelist your development IPs (comma-separated)
+WHITELISTED_IPS=127.0.0.1,192.168.1.100
+```
+
+📖 **Full Documentation**: See [RATE_LIMITING.md](./RATE_LIMITING.md) for complete setup guide
+
+---
+
 ## 🎨 Themes
 
 Q Panda Studio comes with multiple beautiful themes:
 - **Q Panda** (Default): Vibrant and modern
-- **Dark Mode**: Easy on the eyes
-- **Ocean Blue**: Calming blue tones
-- **Sunset**: Warm orange and pink gradients
+- **Mint**: Fresh green aesthetic
+- **Crimson**: Bold red accents
+
+---
+
+## 🚀 Deployment
+
+Q Panda Studio supports multiple deployment options:
+
+### ☁️ Serverless (Vercel/Netlify) - **Recommended for Free Tier**
+- ✅ **Free hosting** on Vercel or Netlify
+- ✅ Serverless functions with rate limiting
+- ✅ Auto-scaling and CDN
+- ⚠️ Rate limits reset on cold starts (acceptable for most use cases)
+
+**Quick Deploy:**
+```bash
+# Vercel
+vercel
+
+# Netlify  
+netlify deploy --prod
+```
+
+### 🖥️ Traditional Server (Railway/Render/Fly.io)
+- ✅ Persistent rate limiting with Redis
+- ✅ Always-on server (no cold starts)
+- ✅ Better for high-traffic apps
+- 💰 Starts at ~$5-10/month
+
+**Deploy Express server:**
+```bash
+npm run build:server
+npm run start:server
+```
+
+📖 **Full Deployment Guide:** See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed instructions
 
 ---
 
@@ -219,6 +363,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
   <p>
     <a href="https://github.com/harryneopotter/PandaBanana/issues">Report Bug</a> •
     <a href="https://github.com/harryneopotter/PandaBanana/issues">Request Feature</a> •
-    <a href="https://ai.studio/apps/drive/1G5TcB1WUFaiJcVFMCBjCQhyX6vGeYRoO">View Live Demo</a>
+    <a href="https://github.com/harryneopotter/PandaBanana">⭐ Star on GitHub</a>
   </p>
 </div>

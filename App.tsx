@@ -2,16 +2,21 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Scene, Screen, EditorMode, ThemeName, OriginalImage } from './types';
 import { SCENE_OPTIONS } from './constants';
-import { fileToBase64, editImageWithScene } from './services/geminiService';
+import { fileToBase64, editImageWithScene, checkApiHealth } from './services/geminiService';
 import ImageUploader from './components/ImageUploader';
 import SceneShiftEditor from './components/SceneShiftEditor';
 import MemeSmithEditor from './components/MemeSmithEditor';
 import CloneCastEditor from './components/CloneCastEditor';
+import SmartCropEditor from './components/SmartCropEditor';
+import StyleTransferEditor from './components/StyleTransferEditor';
+import UpscaleEditor from './components/UpscaleEditor';
+import GifCreatorEditor from './components/GifCreatorEditor';
 import Header from './components/Header';
 import BottomNav from './components/BottomNav';
 import SavedImages from './components/SavedImages';
 import Settings from './components/Settings';
-import { MagicIcon, MemeIcon, QRIcon, ResetIcon, CloneCastIcon } from './components/Icons';
+import SplashScreen from './components/SplashScreen';
+import { MagicIcon, MemeIcon, QRIcon, ResetIcon, CloneCastIcon, CropIcon, StyleIcon, UpscaleIcon, GifIcon } from './components/Icons';
 import { THEMES } from './themes';
 import DreamCanvas from './components/DreamCanvas';
 
@@ -29,6 +34,12 @@ interface PersistedSessionState {
 
 const App: React.FC = () => {
   const SESSION_STORAGE_KEY = 'qPandaStudioCurrentSession';
+  const SPLASH_SHOWN_KEY = 'qPandaStudioSplashShown';
+  const [showSplash, setShowSplash] = useState<boolean>(() => {
+    // Show splash only once per session
+    const splashShown = sessionStorage.getItem(SPLASH_SHOWN_KEY);
+    return !splashShown;
+  });
   const [originalImage, setOriginalImage] = useState<OriginalImage | null>(null);
   const [selectedScene, setSelectedScene] = useState<Scene | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -37,6 +48,11 @@ const App: React.FC = () => {
   const [editorMode, setEditorMode] = useState<EditorMode>(EditorMode.None);
   const [savedImages, setSavedImages] = useState<string[]>([]);
   const [theme, setTheme] = useState<ThemeName>('qPanda');
+  
+  // API health state
+  const [isApiHealthy, setIsApiHealthy] = useState<boolean>(true);
+  const [apiError, setApiError] = useState<string | null>(null);
+  const [isCheckingApi, setIsCheckingApi] = useState<boolean>(true);
 
   // State for SceneShift editor history
   const [sceneShiftHistory, setSceneShiftHistory] = useState<string[]>([]);
@@ -88,6 +104,19 @@ const App: React.FC = () => {
 
   useEffect(() => {
     restoreSessionFromStorage();
+    
+    // Check API health on app load
+    const performHealthCheck = async () => {
+      setIsCheckingApi(true);
+      const healthStatus = await checkApiHealth();
+      setIsApiHealthy(healthStatus.isHealthy);
+      if (!healthStatus.isHealthy) {
+        setApiError(healthStatus.error || 'API is not available');
+      }
+      setIsCheckingApi(false);
+    };
+    
+    performHealthCheck();
   }, [restoreSessionFromStorage]);
 
   useEffect(() => {
@@ -213,6 +242,12 @@ const App: React.FC = () => {
 
 
   const handleImageSelect = async (file: File) => {
+    // Check API health before allowing image upload
+    if (!isApiHealthy) {
+      setError(apiError || 'API is not available. Please check your API key configuration.');
+      return;
+    }
+    
     // Validation logic is now in ImageUploader
     try {
         const { imageData, mimeType } = await fileToBase64(file);
@@ -316,26 +351,87 @@ const App: React.FC = () => {
   
   const renderHome = () => {
     if (!originalImage) {
-      return <ImageUploader onImageSelect={handleImageSelect} />;
+      return (
+        <>
+          {!isApiHealthy && !isCheckingApi && (
+            <div className="mb-6 p-4 bg-red-500/20 border border-red-500/50 rounded-lg text-center">
+              <p className="text-red-200 font-semibold mb-2">⚠️ API Connection Failed</p>
+              <p className="text-red-100 text-sm">{apiError || 'Cannot connect to Gemini API'}</p>
+              <p className="text-red-100 text-xs mt-2">Please check your API key configuration and try refreshing the page.</p>
+            </div>
+          )}
+          {isCheckingApi && (
+            <div className="mb-6 p-4 bg-blue-500/20 border border-blue-500/50 rounded-lg text-center">
+              <p className="text-blue-200 text-sm">🔄 Checking API connection...</p>
+            </div>
+          )}
+          <ImageUploader onImageSelect={handleImageSelect} />
+        </>
+      );
     }
 
     if (editorMode === EditorMode.None) {
       return (
         <div className="w-full flex flex-col items-center">
             <img src={originalImage.dataUrl} alt="Your upload" className="max-w-full w-auto h-auto max-h-[40vh] rounded-2xl shadow-lg mb-6"/>
+            
+            {!isApiHealthy && (
+              <div className="mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-center w-full">
+                <p className="text-red-200 text-sm">⚠️ API unavailable - Features disabled</p>
+                <p className="text-red-100 text-xs mt-1">{apiError}</p>
+              </div>
+            )}
+            
             <h2 className="text-xl font-semibold mb-4 text-[var(--color-text-secondary)]">Choose your magic</h2>
-            <div className="flex flex-wrap justify-center gap-4">
-              <button onClick={() => enterEditorMode(EditorMode.SceneShift)} className="flex items-center space-x-2 px-6 py-3 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-primary-text)] rounded-full font-bold transition-all transform hover:scale-105">
-                <MagicIcon className="w-6 h-6"/>
+            <div className="flex flex-wrap justify-center gap-3">
+              <button 
+                onClick={() => enterEditorMode(EditorMode.SceneShift)} 
+                disabled={!isApiHealthy}
+                className="flex items-center space-x-2 px-5 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-primary-text)] rounded-full font-bold transition-all transform hover:scale-105 text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100">
+                <MagicIcon className="w-5 h-5"/>
                 <span>SceneShift</span>
               </button>
-              <button onClick={() => enterEditorMode(EditorMode.MemeSmith)} className="flex items-center space-x-2 px-6 py-3 bg-[var(--color-secondary)] hover:bg-[var(--color-secondary-hover)] text-[var(--color-secondary-text)] rounded-full font-bold transition-all transform hover:scale-105">
-                <MemeIcon className="w-6 h-6"/>
+              <button 
+                onClick={() => enterEditorMode(EditorMode.MemeSmith)} 
+                disabled={!isApiHealthy}
+                className="flex items-center space-x-2 px-5 py-2.5 bg-[var(--color-secondary)] hover:bg-[var(--color-secondary-hover)] text-[var(--color-secondary-text)] rounded-full font-bold transition-all transform hover:scale-105 text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100">
+                <MemeIcon className="w-5 h-5"/>
                 <span>MemeSmith</span>
               </button>
-              <button onClick={() => enterEditorMode(EditorMode.CloneCast)} className="flex items-center space-x-2 px-6 py-3 bg-[var(--color-tertiary)] hover:bg-[var(--color-tertiary-hover)] text-[var(--color-tertiary-text)] rounded-full font-bold transition-all transform hover:scale-105">
-                <CloneCastIcon className="w-6 h-6"/>
+              <button 
+                onClick={() => enterEditorMode(EditorMode.CloneCast)} 
+                disabled={!isApiHealthy}
+                className="flex items-center space-x-2 px-5 py-2.5 bg-[var(--color-tertiary)] hover:bg-[var(--color-tertiary-hover)] text-[var(--color-tertiary-text)] rounded-full font-bold transition-all transform hover:scale-105 text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100">
+                <CloneCastIcon className="w-5 h-5"/>
                 <span>CloneCast</span>
+              </button>
+              <button 
+                onClick={() => enterEditorMode(EditorMode.SmartCrop)} 
+                disabled={!isApiHealthy}
+                className="flex items-center space-x-2 px-5 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-primary-text)] rounded-full font-bold transition-all transform hover:scale-105 text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100">
+                <CropIcon className="w-5 h-5"/>
+                <span>SmartCrop</span>
+              </button>
+              <button 
+                onClick={() => enterEditorMode(EditorMode.StyleTransfer)} 
+                disabled={!isApiHealthy}
+                className="flex items-center space-x-2 px-5 py-2.5 bg-[var(--color-secondary)] hover:bg-[var(--color-secondary-hover)] text-[var(--color-secondary-text)] rounded-full font-bold transition-all transform hover:scale-105 text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100">
+                <StyleIcon className="w-5 h-5"/>
+                <span>Styles</span>
+              </button>
+              <button 
+                onClick={() => enterEditorMode(EditorMode.Upscale)} 
+                disabled={!isApiHealthy}
+                className="flex items-center space-x-2 px-5 py-2.5 bg-[var(--color-tertiary)] hover:bg-[var(--color-tertiary-hover)] text-[var(--color-tertiary-text)] rounded-full font-bold transition-all transform hover:scale-105 text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100">
+                <UpscaleIcon className="w-5 h-5"/>
+                <span>Upscale</span>
+              </button>
+              <button 
+                onClick={() => enterEditorMode(EditorMode.GifCreator)} 
+                disabled={!isApiHealthy}
+                className="flex items-center space-x-2 px-5 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-primary-text)] rounded-full font-bold transition-all transform hover:scale-105 text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100">
+                <GifIcon className="w-5 h-5"/>
+                <span>GIF Maker</span>
               </button>
             </div>
              <button onClick={handleReset} className="flex items-center space-x-2 mt-6 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors">
@@ -372,39 +468,44 @@ const App: React.FC = () => {
       return <CloneCastEditor image={originalImage} onSave={handleSaveImage} />;
     }
 
+    if (editorMode === EditorMode.SmartCrop) {
+      return <SmartCropEditor image={originalImage} onSave={handleSaveImage} />;
+    }
+
+    if (editorMode === EditorMode.StyleTransfer) {
+      return <StyleTransferEditor image={originalImage} onSave={handleSaveImage} />;
+    }
+
+    if (editorMode === EditorMode.Upscale) {
+      return <UpscaleEditor image={originalImage} onSave={handleSaveImage} />;
+    }
+
+    if (editorMode === EditorMode.GifCreator) {
+      return <GifCreatorEditor image={originalImage} onSave={handleSaveImage} />;
+    }
+
     return null;
   };
 
   const showHeaderBack = editorMode !== EditorMode.None || screen !== Screen.Home || originalImage !== null;
 
   return (
-  <div className="w-full h-full bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] font-sans flex p-0 sm:p-4 bg-gradient-to-br from-[var(--color-gradient-from)] via-[var(--color-gradient-via)] to-[var(--color-gradient-to)] relative overflow-hidden">
-        
-      {/* Background Decorations */}
-      <div className="absolute -top-1/4 -left-1/4 w-96 h-96 bg-[var(--color-blob-2)] rounded-full filter blur-3xl opacity-40 animate-blob"></div>
-      <div className="absolute -bottom-1/4 -right-1/4 w-96 h-96 bg-[var(--color-blob-1)] rounded-full filter blur-3xl opacity-40 animate-blob animation-delay-4000"></div>
-
-      {/* Desktop-only side content */}
-      <div className="hidden lg:flex flex-col items-center text-center mr-16 text-gray-500">
-          <QRIcon className="w-32 h-32 mb-4" />
-          <p className="font-semibold text-lg text-gray-300">Q Panda Studio</p>
-          <p className="text-sm">Teleport your photos to new worlds.</p>
-          <p className="text-xs mt-8">QR code will appear when your app is ready</p>
-      </div>
+  <>
+  <div className="w-full h-full bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] font-sans flex justify-center items-center p-0 sm:p-4 relative overflow-hidden">
 
       {/* The Phone Mockup */}
       <div 
-        className="w-full h-full flex flex-col sm:max-w-[400px] sm:h-[90vh] sm:max-h-[850px] sm:rounded-[40px] sm:shadow-2xl sm:border-[10px] sm:border-[var(--color-bg-tertiary)] overflow-hidden relative"
+        className="w-full h-[100dvh] flex flex-col sm:max-w-[400px] sm:h-[90vh] sm:max-h-[850px] sm:rounded-[40px] sm:shadow-2xl sm:border-[10px] sm:border-[var(--color-bg-tertiary)] overflow-hidden relative"
         style={{
             backgroundColor: 'var(--color-bg-primary)',
             backgroundImage: 'var(--bg-primary-image)',
         }}
       >
         <Header onBack={showHeaderBack ? handleBack : undefined} />
-        <main className="flex-1 flex flex-col items-center overflow-y-auto min-h-0">
+        <main className="flex-1 overflow-y-auto min-h-0">
           <div
             key={screen}
-            className="w-full max-w-md mx-auto p-4 flex-1 flex flex-col animate-screen-fade-in"
+            className="w-full max-w-md mx-auto p-4 animate-screen-fade-in"
           >
             {screen === Screen.Home && renderHome()}
             {screen === Screen.Dream && <DreamCanvas onSave={handleSaveImage} />}
@@ -421,6 +522,17 @@ const App: React.FC = () => {
         <BottomNav activeScreen={screen} setScreen={handleScreenChange} />
       </div>
     </div>
+
+    {/* Splash Screen */}
+    {showSplash && (
+      <SplashScreen
+        onComplete={() => {
+          setShowSplash(false);
+          sessionStorage.setItem(SPLASH_SHOWN_KEY, 'true');
+        }}
+      />
+    )}
+  </>
   );
 };
 
