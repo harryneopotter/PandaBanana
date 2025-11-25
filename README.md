@@ -172,12 +172,13 @@ Open [http://localhost:5173](http://localhost:5173) in your browser and start cr
 
 ```
 PandaBanana/
-├── 📄 App.tsx              # Main application component
-├── 📄 index.tsx            # Entry point
-├── 📄 types.ts             # TypeScript type definitions
-├── 📄 themes.ts            # Theme configurations
-├── 📄 constants.ts         # App constants & scene options
-├── 📂 components/
+├── 📄 App.tsx                  # Main application component
+├── 📄 index.tsx                # Application entry point
+├── 📄 index.html               # HTML template
+├── 📄 types.ts                 # TypeScript type definitions
+├── 📄 themes.ts                # Theme configurations
+├── 📄 constants.ts             # App constants & scene options
+├── 📂 components/              # React UI components
 │   ├── 📄 Header.tsx           # App header with navigation
 │   ├── 📄 BottomNav.tsx        # Bottom navigation bar
 │   ├── 📄 ImageUploader.tsx    # Drag & drop image upload
@@ -189,12 +190,14 @@ PandaBanana/
 │   ├── 📄 Settings.tsx         # Theme & app settings
 │   ├── 📄 LoadingShimmer.tsx   # Loading animations
 │   └── 📄 Icons.tsx            # SVG icon components
-├── 📂 services/
-│   └── 📄 geminiService.ts # Google AI API integration
-├── 📄 package.json         # Dependencies & scripts
-├── 📄 tsconfig.json        # TypeScript configuration
-└── 📄 vite.config.ts       # Vite configuration
+├── 📂 services/                # API services
+│   └── 📄 geminiService.ts     # Google Gemini AI integration
+├── 📄 package.json             # Dependencies & scripts
+├── 📄 tsconfig.json            # TypeScript configuration
+└── 📄 vite.config.ts           # Vite configuration
 ```
+
+> **Note:** This project uses a flat structure with source files at the root level instead of a traditional `src/` directory.
 
 ---
 
