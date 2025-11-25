@@ -141,7 +141,7 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 Q Panda Studio API Server running on port ${PORT}`);
+  console.log(`🚀 Banana Panda API Server running on port ${PORT}`);
   console.log(`📊 Rate Limit: ${RATE_LIMIT_MAX_REQUESTS} requests per ${RATE_LIMIT_WINDOW_MS / 1000 / 60} minutes`);
   console.log(`🔐 Whitelisted IPs: ${WHITELISTED_IPS.length > 0 ? WHITELISTED_IPS.join(', ') : 'None'}`);
   console.log(`🌐 CORS enabled for all origins`);

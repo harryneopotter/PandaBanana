@@ -20,9 +20,12 @@ const Header: React.FC<HeaderProps> = ({ onBack }) => {
           <BackIcon className="w-6 h-6" />
         </button>
       )}
-      <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[var(--color-primary)] via-[var(--color-primary)] to-[var(--color-primary-hover)]">
-        Q Panda Studio
-      </h1>
+      <div className="flex items-center gap-2">
+        <img src="/assets/bananapandalogo.png" alt="Banana Panda Logo" className="h-8" />
+        <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[var(--color-primary)] via-[var(--color-primary)] to-[var(--color-primary-hover)]">
+          Banana Panda
+        </h1>
+      </div>
     </header>
   );
 };

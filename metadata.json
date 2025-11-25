@@ -1,5 +1,5 @@
 {
-  "name": "Q Panda Studio",
+  "name": "Banana Panda",
   "description": "An AI photo studio powered by Gemini. Teleport your images to new scenes, create memes, and generate art from your imagination.",
   "requestFramePermissions": [
     "camera"

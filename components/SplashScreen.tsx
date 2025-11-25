@@ -54,7 +54,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
         {/* Logo Image */}
         <img
           src="/banana-panda.jpg"
-          alt="Q Panda Studio"
+          alt="Banana Panda"
           style={{
             width: '200px',
             height: '200px',
@@ -81,7 +81,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
               backgroundClip: 'text',
             }}
           >
-            Q Panda Studio
+            Banana Panda
           </h1>
           <p
             style={{
