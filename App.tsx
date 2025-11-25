@@ -491,10 +491,20 @@ const App: React.FC = () => {
 
   return (
   <>
-  <div className="w-full h-full bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] font-sans flex justify-center items-center p-0 sm:p-4 relative overflow-hidden">
+    {/* Splash Screen - Render first for proper layering */}
+    {showSplash && (
+      <SplashScreen
+        onComplete={() => {
+          setShowSplash(false);
+          sessionStorage.setItem(SPLASH_SHOWN_KEY, 'true');
+        }}
+      />
+    )}
+
+    <div className="w-full h-full bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] font-sans flex justify-center items-center p-0 sm:p-4 relative overflow-hidden">
 
       {/* The Phone Mockup */}
-      <div 
+      <div
         className="w-full h-[100dvh] flex flex-col sm:max-w-[400px] sm:h-[90vh] sm:max-h-[850px] sm:rounded-[40px] sm:shadow-2xl sm:border-[10px] sm:border-[var(--color-bg-tertiary)] overflow-hidden relative"
         style={{
             backgroundColor: 'var(--color-bg-primary)',
@@ -522,16 +532,6 @@ const App: React.FC = () => {
         <BottomNav activeScreen={screen} setScreen={handleScreenChange} />
       </div>
     </div>
-
-    {/* Splash Screen */}
-    {showSplash && (
-      <SplashScreen
-        onComplete={() => {
-          setShowSplash(false);
-          sessionStorage.setItem(SPLASH_SHOWN_KEY, 'true');
-        }}
-      />
-    )}
   </>
   );
 };

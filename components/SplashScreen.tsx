@@ -6,8 +6,20 @@ interface SplashScreenProps {
 
 const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
   const [fadeOut, setFadeOut] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   useEffect(() => {
+    // Preload the image
+    const img = new Image();
+    img.src = '/banana-panda.jpg';
+    img.onload = () => setImageLoaded(true);
+    img.onerror = () => setImageLoaded(true); // Proceed even if image fails to load
+  }, []);
+
+  useEffect(() => {
+    // Wait for image to load before starting timers
+    if (!imageLoaded) return;
+
     // Start fade out after 2 seconds
     const fadeTimer = setTimeout(() => {
       setFadeOut(true);
@@ -22,7 +34,27 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
       clearTimeout(fadeTimer);
       clearTimeout(completeTimer);
     };
-  }, [onComplete]);
+  }, [onComplete, imageLoaded]);
+
+  // Don't render until image is loaded
+  if (!imageLoaded) {
+    return (
+      <div
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          backgroundColor: '#ffffff',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+        }}
+      />
+    );
+  }
 
   return (
     <div
@@ -40,6 +72,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
         zIndex: 9999,
         opacity: fadeOut ? 0 : 1,
         transition: 'opacity 0.8s ease-out',
+        pointerEvents: fadeOut ? 'none' : 'auto',
       }}
     >
       <div
@@ -107,20 +140,6 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
           }}
         />
       </div>
-
-      <style>
-        {`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-
-          @keyframes splashPulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-          }
-        `}
-      </style>
     </div>
   );
 };

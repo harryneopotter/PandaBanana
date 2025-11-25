@@ -51,6 +51,15 @@
     #root {
       height: 100%;
     }
+    /* Splash Screen Animations */
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    @keyframes splashPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+    }
   </style>
 <link rel="stylesheet" href="/index.css">
 </head>
