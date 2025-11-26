@@ -20,7 +20,7 @@
 ---
 
 ## 📱 See It In Action
-
+<img src="./assets/howbanana.gif" alt="PandaBanana Home" width="300"/>
 <div align="center">
   
   ### Home Screen
