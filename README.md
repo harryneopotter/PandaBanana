@@ -20,9 +20,10 @@
 ---
 
 ## 📱 See It In Action
-<img src="./assets/howbanana.gif" alt="PandaBanana Home" width="300"/>
 <div align="center">
-  
+  ### In Action
+  ![Alt Text](howbanana.gif)
+
   ### Home Screen
   <img src="./assets/bananpanda-home.jpg" alt="PandaBanana Home" width="300"/>
   
