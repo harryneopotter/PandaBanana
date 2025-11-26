@@ -1,8 +1,8 @@
 <div align="center">
-  <h1>🐼🍌 Banana Panda</h1>
+  <h1>🐼🍌 PandaBanana</h1>
   <p><strong>AI-Powered Creative Photo Studio</strong></p>
   
-  <img src="./banana-panda.jpg" alt="Banana Panda" width="400"/>
+  <img src="./banana-panda.jpg" alt="PandaBanana" width="400"/>
   
   <p>
     <img alt="GitHub stars" src="https://img.shields.io/github/stars/harryneopotter/PandaBanana?style=social" />
@@ -24,7 +24,7 @@
 <div align="center">
   
   ### Home Screen
-  <img src="./assets/bananpanda-home.jpg" alt="Banana Panda Home" width="300"/>
+  <img src="./assets/bananpanda-home.jpg" alt="PandaBanana Home" width="300"/>
   
   ### AI Generation
   <img src="./assets/bananpanda-gen.jpg" alt="AI Image Generation" width="300"/>
@@ -39,9 +39,9 @@
 
 ---
 
-## ✨ What is Banana Panda?
+## ✨ What is PandaBanana?
 
-**Banana Panda** is a revolutionary AI-powered photo editing platform that transforms your images into creative masterpieces. Powered by Google's Gemini AI, it offers multiple creative tools to enhance, transform, and reimagine your photos with just a few clicks.
+**PandaBanana** is a revolutionary AI-powered photo editing platform that transforms your images into creative masterpieces. Powered by Google's Gemini AI, it offers multiple creative tools to enhance, transform, and reimagine your photos with just a few clicks.
 
 ### 🎯 Key Features
 
@@ -256,7 +256,7 @@ q-panda-studio/
 
 ## 🔒 Rate Limiting & Security
 
-Banana Panda includes built-in rate limiting and IP whitelisting to protect your API usage:
+PandaBanana includes built-in rate limiting and IP whitelisting to protect your API usage:
 
 ### Features
 - **Per-IP Rate Limiting**: Prevents abuse by limiting requests per IP address
@@ -282,7 +282,7 @@ WHITELISTED_IPS=127.0.0.1,192.168.1.100
 
 ## 🎨 Themes
 
-Banana Panda comes with multiple beautiful themes:
+PandaBanana comes with multiple beautiful themes:
 - **Q Panda** (Default): Vibrant and modern
 - **Mint**: Fresh green aesthetic
 - **Crimson**: Bold red accents
@@ -291,7 +291,7 @@ Banana Panda comes with multiple beautiful themes:
 
 ## 🚀 Deployment
 
-Banana Panda supports multiple deployment options:
+PandaBanana supports multiple deployment options:
 
 ### ☁️ Serverless (Vercel/Netlify) - **Recommended for Free Tier**
 - ✅ **Free hosting** on Vercel or Netlify
@@ -360,7 +360,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 <div align="center">
   <h3>🌟 Star this repo if you found it helpful!</h3>
-  <p>Made with ❤️ by the Banana Panda team</p>
+  <p>Made with ❤️ by the PandaBanana team</p>
   
   <p>
     <a href="https://github.com/harryneopotter/PandaBanana/issues">Report Bug</a> •
