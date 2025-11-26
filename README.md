@@ -22,7 +22,7 @@
 ## 📱 See It In Action
 <div align="center">
   ### In Action
-  ![Alt Text](howbanana.gif)
+
   <img src="./assets/howbanana.gif" alt="PandaBanana Demo" width="300"/>
   ### Home Screen
   <img src="./assets/bananpanda-home.jpg" alt="PandaBanana Home" width="300"/>
